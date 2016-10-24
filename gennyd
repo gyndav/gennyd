@@ -141,7 +141,7 @@ execution_time() {
 # resetting OPTIND
 OPTIND=1
 
-while getopts "e:o:h" opt; do
+while getopts "e:o:h:v" opt; do
 case "$opt" in
   e)
     E404="$OPTARG"
@@ -151,6 +151,10 @@ case "$opt" in
     ;;
   h)
     help
+    exit 0
+    ;;
+  v)
+    echo $VERSION
     exit 0
     ;;
   \?)
