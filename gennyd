@@ -3,7 +3,6 @@
 # Build static websites from dynamic app, whatever the language
 
 set -euo pipefail
-# set -uo pipefail
 
 umask 077
 
@@ -69,7 +68,7 @@ build() {
     "$WEBSITE"
   status="$?"
   set -e
-echo $status
+
   if [ "$status" -gt 1 ]
   then
     echo ""
