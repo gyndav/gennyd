@@ -1,0 +1,194 @@
+#!/usr/bin/env bash
+#
+# Build static websites from dynamic app, whatever the language
+
+set -euo pipefail
+# set -uo pipefail
+
+umask 077
+
+IFS=$'\n\t'
+
+###
+### globals
+###
+
+OUTPUT="_website"
+E404="none"
+VERSION="1.0.0"
+
+###
+### functions
+###
+
+help() {
+  cat <<EOF
+Build static websites from dynamic app, whatever the language.
+
+VERSION
+  $VERSION
+
+USAGE
+  ${0##*/} [-o OUTPUT] [-e E404] [website]
+    -o OUTPUT   output directory
+    -e E404     uri to 404 page forcing generation. output is 404.html (average name)
+
+EXAMPLES
+  ${0##*/} localhost:3000
+  ${0##*/} -o build_dir -e /error404.html 127.0.0.1:8080
+EOF
+}
+
+cleanup() {
+  printf "\n==> Cleaning output directory...\n"
+  rm -rf "${OUTPUT}"
+  mkdir -p "${OUTPUT}"
+}
+
+config() {
+  printf "\n==> Running with this config...\n"
+  echo "WEBSITE: $WEBSITE"
+  echo "OUTPUT: $OUTPUT"
+  echo "E404: $E404"
+}
+
+build() {
+  printf "\n==> Building all crawlable pages...\n"
+  local status
+
+  set +e
+  wget \
+    --no-parent \
+    --quiet \
+    --no-clobber \
+    --recursive \
+    --html-extension \
+    --no-host-directories \
+    --directory-prefix="$OUTPUT" \
+    -o wget.log \
+    "$WEBSITE"
+  status="$?"
+  set -e
+echo $status
+  if [ "$status" -gt 1 ]
+  then
+    echo ""
+    echo "There were some errors while fetching $WEBSITE."
+
+    # Minor errors like 404s
+    if [ "$status" == 8 ]
+    then
+      echo "It's probably 404s (see logs): do you want to continue anyway? (y/n)"
+      read -r CHOICE
+
+      # quit
+      if [[ "$CHOICE" = "n" ]]
+      then
+        exit 0
+      fi
+    else
+      exit 1
+    fi
+
+  fi
+}
+
+# cURL > wget because of fetching an error page doesn't work
+force_build() {
+  if [ $E404 = "none" ]
+  then
+    return
+  fi
+
+  printf "\n==> Building uncrawlable 404 page...\n"
+  local status
+
+  set +e
+  curl -fsS -o "$OUTPUT"/404.html "$WEBSITE$E404"
+  status=$?
+  set -e
+
+  if [ "$status" -gt 1 ]
+  then
+    echo ""
+    echo "There were some errors while fetching URL $E404. You should check twice."
+  fi
+}
+
+remove_querystring() {
+  printf "\n==> Remove querystring (?v=) over files...\n"
+  FILES=$(find "$OUTPUT" -type f | grep "?v=" | uniq)
+  for f in $FILES
+  do
+    mv "$f" $(echo "$f" | sed "s/?v=.*//g")
+  done
+}
+
+execution_time() {
+  local start=$1
+  local end
+  local total_time
+
+  end=$(date +%s)
+  total_time=$(echo $((end-start)) | awk '{printf "%d:%02d:%02d", $1/3600, ($1/60)%60, $1%60}')
+
+  printf "\n==> DONE in just %s!\n" "$total_time"
+}
+
+###
+### arguments processing
+###
+
+# resetting OPTIND
+OPTIND=1
+
+while getopts "e:o:h" opt; do
+case "$opt" in
+  e)
+    E404="$OPTARG"
+    ;;
+  o)
+    OUTPUT="$OPTARG"
+    ;;
+  h)
+    help
+    exit 0
+    ;;
+  \?)
+    echo "Invalid option: -$OPTARG" >&2
+    exit 1
+    ;;
+  :)
+    echo "Option -$OPTARG requires an argument." >&2
+    exit 1
+    ;;
+esac
+done
+
+# shift off the options and optional --
+shift "$((OPTIND-1))"
+WEBSITE="${1:-unknown}"
+
+if [ "$WEBSITE" == "unknown" ]
+then
+  printf "Warning: please choose a website URL\n\n"
+  help
+  exit 1
+fi
+
+#
+# MAIN
+#
+
+# trap 'cleanup' 0
+START=$(date +%s)
+
+config
+cleanup
+build
+force_build
+remove_querystring
+
+execution_time START
+
+exit 0
