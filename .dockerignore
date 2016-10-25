@@ -1,0 +1,7 @@
+_website/
+*.log
+.editorconfig
+.git/
+.gitignore
+LICENSE
+*.md
