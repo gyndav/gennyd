@@ -1,6 +1,6 @@
 #!/bin/sh
 
-set -e
+set -euo pipefail
 
 GENNYD_BIN=/usr/local/bin/gennyd
 RESET="\e[0m"
