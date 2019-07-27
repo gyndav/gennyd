@@ -11,7 +11,7 @@ STD="\e[0;37m"
 gennyd_download() {
   printf "$STD ==> downloading 'gennyd' $RESET\n"
   curl -sSL -o "$GENNYD_BIN" \
-    https://raw.githubusercontent.com/dguyon/gennyd/master/gennyd
+    https://raw.githubusercontent.com/gyndav/gennyd/master/gennyd
   chmod +x "$GENNYD_BIN"
   printf "$OK Hooray! 'gennyd' is installed on your system: run 'gennyd -h'.$RESET\n"
 }

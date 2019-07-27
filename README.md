@@ -18,7 +18,7 @@ it in `/usr/local/bin`. Please make sure that you added that to $PATH environmen
 variable.
 
 ```console
-  curl -sSL https://raw.githubusercontent.com/dguyon/gennyd/master/install.sh | sh
+  curl -sSL https://raw.githubusercontent.com/gyndav/gennyd/master/install.sh | sh
 ```
 
 ## Usage
