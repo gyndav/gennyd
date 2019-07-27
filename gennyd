@@ -190,7 +190,7 @@ config
 cleanup
 build
 force_build
-remove_querystring
+#remove_querystring
 
 execution_time START
 
